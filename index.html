@@ -83,6 +83,9 @@ header{display:flex;align-items:center;gap:5px;padding:7px 9px;flex-shrink:0;z-i
 .spin{width:34px;height:34px;border-radius:99px;border:4px solid #a7f3d0;border-top-color:#10b981;border-right-color:#fbbf24;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .loading b{font-size:11px;color:#065f46;letter-spacing:.09em}
+.wbar{display:flex;gap:5px;overflow-x:auto;padding:2px 11px 0;font-size:10px;font-weight:800;color:#475569;scrollbar-width:none}
+.wbar::-webkit-scrollbar{display:none}
+.wbar span{background:#fff;border:1px solid #e2e8f0;border-radius:99px;padding:2px 8px;white-space:nowrap}
 .main{flex:1;display:flex;flex-direction:column;padding:4px 11px 10px;overflow:hidden;min-height:0;gap:6px}
 .dlg{background:#fffffff7;border:2.5px solid var(--g2);border-radius:16px;box-shadow:0 4px 12px #2ecc7124,inset 0 0 0 2px #f0fdf4;padding:9px;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
 .dlghead{display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid #d1fae5;padding-bottom:5px;margin-bottom:5px;flex-shrink:0}
@@ -203,6 +206,7 @@ form{display:flex;gap:6px;padding-top:2px}
     </div>
   </div>
   <input type="file" id="file" accept="image/*" class="hide">
+  <div class="wbar" id="wbar"></div>
   <div class="main">
     <div class="dlg">
       <div class="dlghead"><span>◆ 現在の状況</span><span id="lastact" class="hide"></span></div>
@@ -248,7 +252,7 @@ form{display:flex;gap:6px;padding-top:2px}
       <div>
         <label>Venice APIキー</label>
         <input id="keyin" type="password" placeholder="venice_..." autocomplete="off">
-        <p class="hint">https://venice.ai/settings/api で発行。この端末のlocalStorageにのみ保存される。個人使用ならこれで十分。</p>
+        <p class="hint">https://venice.ai/settings/api で発行。この端末のlocalStorageにのみ保存される。</p>
         <p class="hint warn">無料モデルはレート制限あり。429が出たら少し待って再試行。</p>
       </div>
       <div>
@@ -269,6 +273,15 @@ form{display:flex;gap:6px;padding-top:2px}
           <button data-v="off" class="on">切る</button>
         </div>
         <p class="hint">切っておけば、CGは「再描画」を押したときだけ1枚生成される。</p>
+      </div>
+      <div>
+        <label>文体</label>
+        <div class="seg" id="toneseg">
+          <button data-v="std" class="on">標準</button>
+          <button data-v="lit">文学調</button>
+          <button data-v="comic">コミカル</button>
+        </div>
+        <p class="hint">文学調は乾いて濃い。コミカルは軽い。標準は中庸。</p>
       </div>
       <button class="wide btn-g glossy" id="set-save">保存して接続テスト</button>
       <button class="wide btn-y glossy" id="set-clear">キーを削除</button>
@@ -291,12 +304,12 @@ function mul(s){let t=s>>>0;return function(){t+=0x6D2B79F5;let r=Math.imul(t^t>
 const KEY="rj4_state";
 const API="https://api.venice.ai/api/v1";
 
-const SET={key:"",tmodel:"",imodel:"flux-dev",img:"off"};
+const SET={key:"",tmodel:"",imodel:"flux-dev",img:"off",tone:"std"};
 try{Object.assign(SET,JSON.parse(localStorage.getItem("rj4_set")||"{}"));}catch(e){}
 function saveSet(){localStorage.setItem("rj4_set",JSON.stringify(SET));note();}
 function note(){$("mode-note").textContent=SET.key?"接続設定あり・Venice稼働可":"未接続（設定からキーを入力）";}
 
-const G={turn:0,loc:"",cat:"street",att:0,label:"平穏な日常",narr:"",choices:[],archive:[],undo:[],mode:"venice",pending:null,imgPrompt:"",busy:false,history:[]};
+const G={turn:0,loc:"",cat:"street",att:0,label:"平穏な日常",narr:"",choices:[],archive:[],undo:[],mode:"venice",pending:null,imgPrompt:"",busy:false,history:[],world:{time:"朝",weather:"晴れ",cast:[],threads:[],items:[],beat:""}};
 
 const CATS={
  station:{spots:["JR新宿駅・中央線ホーム","山手線の車内","駅の階段","改札前"],npcs:["スーツの会社員","女子高生","旅行者","駅員","酔客"],normal:["自販機でコーヒーを買う","一本見送ってベンチに座る","スマホで乗換を調べる"],bold:["満員電車に無理やり乗り込む","駅員に構内を案内してもらう","ホームの端まで全力で歩く"],chaos:["発車ベルに合わせて全力疾走する","改札前で大声で挨拶する","ホームでラジオ体操を始める"],b:"cool",n:"駅の冷たい空気"},
@@ -387,21 +400,36 @@ function soloScene(text,isStart){
   imagePrompt:`First-person POV, ${loc}, ${npc}`};
 }
 
-const SYS=`あなたは『REAL JAPAN: 自由行動シミュレーター』のAIゲームマスター。
-舞台はごく普通のリアルな現代日本（電車、コンビニ、商店街、学校、オフィス、ファミレス、繁華街など）。
-1. 世界観のベースは普通の現代日本。SF/ファンタジーは基本出さない。
-2. 破天荒な行動には、現代日本の人々・警察・SNSがリアルに驚き騒然とする形で反応させる。説教せず楽しく。
-3. プレイヤーが「〜した結果、〇〇」と結果まで指定したら、その結果を100%事実として受け入れ、そこから進める。
-4. narrationは日本語110〜175字。一人称視点で、目の前の光景と周囲の反応を生き生きと。
-5. choicesは normal（堅実）/ bold（大胆）/ chaos（予想外）の3つ。
-6. attentionLevelは0〜100の整数で、直前より大きく動かしすぎない（±25以内）。
-7. 出力はJSONオブジェクトのみ。前後に文章やコードフェンスを付けない。
-キー: location, attentionLevel, statusLabel, narration, choices[{label,type}], imagePrompt
-imagePromptは必ず"First-person POV,"で始まる英語。ウマ娘/原神のような3DCGアニメゲーム調（非フォトリアル）。武器・血・爆発の直接語は避け、視覚表現に置換する。`;
+const SYS=`あなたは現代日本を舞台にした連続ドラマの演出家であり、『REAL JAPAN』のゲームマスター。毎ターン、前の場面の続きを1シーンだけ書き足す。単発の寸評ではなく、積み上がる物語を書く。
+
+【絶対に守る】
+- 前ターンの人物・小道具・場所・約束・時刻を引き継ぐ。名前のある人物は必ず同じ名前で再登場させ、勝手に消さない。
+- WORLDの cast / threads / items を今回の本文で最低1つは具体的に使う。
+- プレイヤーが「〜した結果、〇〇」と結果を指定したら、その結果を100%既成事実として書き、そこから次の展開へ進める。
+- 舞台は普通の現代日本。SF/ファンタジーは原則出さない（プレイヤーが持ち込んだ場合のみ許容）。
+- 破天荒な行動には、現代日本の人々・警察・SNSが現実的に騒然と反応する。説教せず、面白がって書く。
+
+【書き方（ここが肝）】
+- narrationは日本語200〜320字。一人称・現在形。プレイヤーの目線で、いま起きていることだけを書く。
+- 五感を2つ以上入れる（音・匂い・温度・肌触り・光）。抽象的な形容より具体物で。数字か固有名詞を最低1つ入れる。
+- 誰かの台詞を必ず1つ、鉤括弧で入れる。話者は名前か役割で特定する。
+- 比喩を1つだけ入れる。陳腐な比喩は避ける。
+- 最後は必ず「次に繋がる引き」で終える（動作の途中・問いかけ・差し出されたもの・鳴り始めた音など）。オチはつけない。
+- 禁止の締め方:「〜が起きた」「〜した」「〜のようだ」「〜が待ち受けている」。これだけで終わらせない。
+- 説明を書かない。情景と反応で語る。
+
+【出力】
+- choicesは normal（堅実な日常行動）/ bold（大胆）/ chaos（予想外）。前の3択と文言を被らせない。
+- attentionLevelは0〜100の整数。直前から±25以内。
+- stateに今回の到達点を入れる: time（朝/昼/夕方/夜/深夜）/ weather / cast（名前と一言の関係・最大3）/ threads（未解決の糸・最大3）/ items（手元の小道具・最大3）。
+- beatは今回の出来事を25字以内で要約した1文。
+- 出力はJSONオブジェクトのみ。コードフェンスも前置きも付けない。
+キー: location, attentionLevel, statusLabel, narration, choices[{label,type}], state{time,weather,cast[],threads[],items[]}, beat, imagePrompt
+imagePromptは"First-person POV,"で始まる英語。ウマ娘/原神のような3DCGアニメゲーム調（非フォトリアル）。武器・血・爆発の直接語は避け視覚表現に置換する。`;
 
 function headers(extra){return Object.assign({"Authorization":"Bearer "+SET.key,"Content-Type":"application/json"},extra||{});}
 async function chat(messages){
- const body={model:SET.tmodel,messages,temperature:0.9,max_tokens:900,
+ const body={model:SET.tmodel,messages,temperature:1.0,max_tokens:1600,
   venice_parameters:{include_venice_system_prompt:false}};
  const r=await fetch(API+"/chat/completions",{method:"POST",headers:headers(),body:JSON.stringify(body)});
  if(!r.ok){const txt=await r.text().catch(()=>"");throw new Error(r.status===401||r.status===403?"AUTH":"HTTP "+r.status+" "+txt.slice(0,120));}
@@ -417,16 +445,35 @@ function parseJSON(t){
  for(const c of cands){try{const o=JSON.parse(c.trim());if(o&&(o.narration||o.location))return o;}catch(e){}}
  return null;
 }
+function toneLine(){return SET.tone==="lit"?"\n【文体指定】硬質で乾いた文学調。短文と体言止めを混ぜ、情感を説明せず物で語る。":SET.tone==="comic"?"\n【文体指定】軽快なコメディ調。テンポ優先で大げさに、ただし現実の範囲で。":"";}
+function worldBlock(){
+ const w=G.world||{};
+ return `【WORLD】時刻:${w.time||"朝"} 天候:${w.weather||"晴れ"} 注目度:${G.att}%(${G.label}) 場所:${G.loc||"未定"}
+前回の要約: ${w.beat||"(なし)"}
+人物: ${(w.cast||[]).join(" / ")||"(なし)"}
+未解決: ${(w.threads||[]).join(" / ")||"(なし)"}
+小道具: ${(w.items||[]).join(" / ")||"(なし)"}
+直前の本文: ${(G.narr||"").slice(0,200)}`;
+}
 async function veniceScene(action,isStart){
- const userMsg=isStart?`【開始シーン】${action}\nこの日常から開始せよ。`:`【プレイヤーの行動】${action}`;
+ const userMsg=(isStart
+  ?`【開始シーン】${action}\nここから始めよ。1ターン目は人物を1人と小道具を1つ出し、必ず引きで終えよ。`
+  :`${worldBlock()}\n【プレイヤーの行動】${action}`)+toneLine();
  const hist=[...G.history,{role:"user",content:userMsg}].slice(-12);
- let txt=await chat([{role:"system",content:SYS},...hist]);
+ const sys={role:"system",content:SYS};
+ let txt=await chat([sys,...hist]);
  let o=parseJSON(txt);
  if(!o){
-  txt=await chat([{role:"system",content:SYS},...hist,{role:"user",content:"JSONのみで再出力せよ。"}]);
+  txt=await chat([sys,...hist,{role:"user",content:"JSONのみで再出力せよ。"}]);
   o=parseJSON(txt);
  }
  if(!o)throw new Error("PARSE");
+ if(o.state){
+  G.world={time:o.state.time||G.world.time,weather:o.state.weather||G.world.weather,
+   cast:(o.state.cast||[]).slice(0,3),threads:(o.state.threads||[]).slice(0,3),
+   items:(o.state.items||[]).slice(0,3),beat:G.world.beat};
+ }
+ if(o.beat)G.world.beat=o.beat;
  G.history=[...hist,{role:"assistant",content:JSON.stringify(o)}].slice(-12);
  return o;
 }
@@ -457,6 +504,8 @@ function renderScene(s,turnNum,actionText,imgUrl){
  $("abar").style.width=Math.max(5,lv)+"%";
  if(actionText){$("lastact").textContent="行動: "+actionText;$("lastact").classList.remove("hide");}else $("lastact").classList.add("hide");
  $("narr").textContent=s.narration||"";$("narr").scrollTop=0;
+ const w=G.world||{};
+ $("wbar").innerHTML=[`🕒 ${w.time||"朝"}`,`☁ ${w.weather||"晴れ"}`,...(w.cast||[]),...(w.threads||[]).map(t=>"◈ "+t),...(w.items||[]).map(i=>"◆ "+i)].map(x=>`<span>${esc(x)}</span>`).join("");
  const box=$("choices");box.innerHTML="";
  const st=[["btn-g","A","🚶"],["btn-b","B","⚡"],["btn-o","C","🔥"]];
  (s.choices||[]).slice(0,3).forEach((c,i)=>{
@@ -493,6 +542,7 @@ function submit(action){
 function snap(action){return{turn:G.turn,loc:G.loc,cat:G.cat,att:G.att,label:G.label,narr:G.narr,
  choices:JSON.parse(JSON.stringify(G.choices)),archive:JSON.parse(JSON.stringify(G.archive)),
  history:JSON.parse(JSON.stringify(G.history)),
+ world:JSON.parse(JSON.stringify(G.world)),
  action:G.archive.length?G.archive[G.archive.length-1].action:null,
  img:G.archive.length?G.archive[G.archive.length-1].img:null,submitted:action||""};}
 function apply(s,actionText){
@@ -541,21 +591,24 @@ function undo(){
  const p=G.undo.pop();
  G.turn=p.turn;G.loc=p.loc;G.cat=p.cat;G.att=p.att;G.label=p.label;G.narr=p.narr;
  G.choices=p.choices;G.archive=p.archive;G.history=p.history||[];
+ G.world=p.world||G.world;
  renderScene({location:p.loc,attentionLevel:p.att,statusLabel:p.label,narration:p.narr,choices:p.choices},p.turn,p.action,p.img);
  $("free").value=p.submitted||"";if(p.submitted)$("free").focus();
  lock(false);save();
 }
 
 function buildPacket(){
+ const w=G.world||{};
  const hist=G.archive.slice(-3).map(a=>`- ${a.action?("行動: "+a.action):"開始"} → ${(a.narration||"").slice(0,60)}`).join("\n");
  return `=== REAL JAPAN TURN PACKET ===
-GM指示: 現代日本サンドボックスのAIゲームマスターとして1ターン進めよ。破天荒な行動には現実の人々/警察/SNSが騒然と反応する。結果指定は100%受け入れる。narrationは日本語110〜175字。JSONのみ出力: {"location","attentionLevel","statusLabel","narration","choices":[{"label","type"}],"imagePrompt"}
+GM指示: 現代日本サンドボックスのAIゲームマスターとして1ターン進めよ。前の人物/小道具/場所を引き継ぎ、narrationは日本語200〜320字、五感・台詞・引きを必ず入れる。結果指定は100%受け入れる。JSONのみ出力: {"location","attentionLevel","statusLabel","narration","choices":[{"label","type"}],"state":{"time","weather","cast":[],"threads":[],"items":[]},"beat","imagePrompt"}
+WORLD: 時刻${w.time||"朝"} 天候${w.weather||"晴れ"} 人物${(w.cast||[]).join("/")||"なし"} 未解決${(w.threads||[]).join("/")||"なし"} 小道具${(w.items||[]).join("/")||"なし"} 前回${w.beat||"なし"}
 CURRENT LOCATION: ${G.loc}
 ATTENTION: ${G.att}% (${G.label})
 TURN: ${G.turn}
 RECENT:
 ${hist||"(なし)"}
-LAST: ${(G.narr||"").slice(0,140)}
+LAST: ${(G.narr||"").slice(0,200)}
 ACTION: ${G.pending||"(開始)"}
 === END ===`;
 }
@@ -574,6 +627,9 @@ async function copyText(t){
 function applyImport(){
  const o=parseJSON($("imp").value);
  if(!o||!o.narration){toast("JSONが見つかりません");return;}
+ if(o.state)G.world={time:o.state.time||G.world.time,weather:o.state.weather||G.world.weather,
+  cast:(o.state.cast||[]).slice(0,3),threads:(o.state.threads||[]).slice(0,3),
+  items:(o.state.items||[]).slice(0,3),beat:o.beat||G.world.beat};
  G.undo.push(snap(G.pending||""));
  apply(o,G.pending||"");
  toast("反映しました");
@@ -593,6 +649,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(G));}catch(e){}}
 function load(){
  try{const r=localStorage.getItem(KEY);if(!r)return false;const o=JSON.parse(r);
   if(!o.turn)return false;Object.assign(G,o);G.busy=false;
+  if(!G.world)G.world={time:"朝",weather:"晴れ",cast:[],threads:[],items:[],beat:""};
   $("start").classList.add("hide");$("game").classList.remove("hide");setMode(G.mode||"venice");
   const last=G.archive[G.archive.length-1];
   renderScene({location:G.loc,attentionLevel:G.att,statusLabel:G.label,narration:G.narr,choices:G.choices},G.turn,last?last.action:null,last?last.img:null);
@@ -602,6 +659,7 @@ function load(){
 document.querySelectorAll(".pcard").forEach(b=>b.onclick=()=>start(b.dataset.scene));
 function start(scene){
  G.turn=0;G.archive=[];G.undo=[];G.att=0;G.narr="";G.choices=[];G.loc="";G.history=[];
+ G.world={time:"朝",weather:"晴れ",cast:[],threads:[],items:[],beat:""};
  $("start").classList.add("hide");$("game").classList.remove("hide");
  $("narr").textContent="最初のシーンを生成中...";$("choices").innerHTML="";
  submit(scene);
@@ -643,11 +701,14 @@ $("home").onclick=()=>{if(G.busy)return;
 $("open-set").onclick=()=>{
  $("keyin").value=SET.key;
  document.querySelectorAll("#imseg button").forEach(b=>b.classList.toggle("on",b.dataset.v===SET.img));
+ document.querySelectorAll("#toneseg button").forEach(b=>b.classList.toggle("on",b.dataset.v===SET.tone));
  $("setm").classList.remove("hide");
 };
 $("set-x").onclick=()=>$("setm").classList.add("hide");
 document.querySelectorAll("#imseg button").forEach(b=>b.onclick=()=>{
  document.querySelectorAll("#imseg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");});
+document.querySelectorAll("#toneseg button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("#toneseg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");});
 function priceOf(m){
  const p=m.model_spec&&m.model_spec.pricing;
  if(!p)return null;
@@ -676,6 +737,7 @@ $("set-save").onclick=async()=>{
  if(!$("tmodel").value){toast("モデル一覧を取得して選んでください");return;}
  SET.tmodel=$("tmodel").value;SET.imodel=$("imodel").value;
  const on=document.querySelector("#imseg button.on");if(on)SET.img=on.dataset.v;
+ const tn=document.querySelector("#toneseg button.on");if(tn)SET.tone=tn.dataset.v;
  saveSet();
  if(!SET.key){toast("キー未入力");return;}
  toast("接続テスト中...");
