@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16a34a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>REAL JAPAN: 自由行動シミュレーター</title>
+<meta name="description" content="現代日本サンドボックス。自由記述で結果まで指定できる一人称視点アドベンチャー。">
+<style>
+:root{--cream:#FDFBF7;--ink:#334155;--line:#cbd5e1;--gold:#f59e0b;
+--g1:#6ee755;--g2:#4CD964;--g3:#2ECC71;--g4:#1e9e4c;
+--b1:#5ce1ff;--b2:#26b5f5;--b3:#0d92db;--b4:#096ba3;
+--o1:#ffad42;--o2:#ff841f;--o3:#e85d04;--o4:#a84000;
+--p1:#ff7eb3;--p2:#ff4785;--p3:#d92363;--p4:#991342;
+--y1:#fde047;--y2:#facc15;--y3:#eab308;--y4:#a16207}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;background:#e2e8f0;color:var(--ink);display:flex;justify-content:center;overflow-x:hidden}
+#app{width:100%;max-width:448px;height:100dvh;min-height:640px;max-height:940px;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--cream);background-image:radial-gradient(#e8e2d2 1.25px,transparent 1.25px),radial-gradient(#e8e2d2 1.25px,#FDFBF7 1.25px);background-size:24px 24px;background-position:0 0,12px 12px;border-left:1px solid var(--line);border-right:1px solid var(--line);box-shadow:0 24px 60px -30px #0f172a66}
+.glossy{border:2.5px solid #fff;color:#fff;font-weight:800;cursor:pointer;transition:transform .1s}
+.glossy:active:not(:disabled){transform:translateY(2px)}
+.btn-g{background:linear-gradient(180deg,var(--g1),var(--g2) 48%,var(--g3));box-shadow:0 3px 0 var(--g4),0 5px 10px #2ecc7147,inset 0 2px 2px #fff9}
+.btn-b{background:linear-gradient(180deg,var(--b1),var(--b2) 48%,var(--b3));box-shadow:0 3px 0 var(--b4),0 5px 10px #0d92db47,inset 0 2px 2px #fff9}
+.btn-o{background:linear-gradient(180deg,var(--o1),var(--o2) 48%,var(--o3));box-shadow:0 3px 0 var(--o4),0 5px 10px #e85d0447,inset 0 2px 2px #fff9}
+.btn-p{background:linear-gradient(180deg,var(--p1),var(--p2) 48%,var(--p3));box-shadow:0 3px 0 var(--p4),0 5px 10px #d9236350,inset 0 2px 2px #fff9}
+.btn-y{background:linear-gradient(180deg,var(--y1),var(--y2) 48%,var(--y3));color:#422006;border:2px solid #fff;box-shadow:0 2px 0 var(--y4),0 4px 8px #eab30850,inset 0 2px 2px #fffB}
+.card{background:linear-gradient(180deg,#fff,#f5f9f6);border:2px solid var(--line);border-radius:16px;box-shadow:0 3px 0 var(--line),0 4px 8px #0f172a10;transition:.12s;text-align:left;cursor:pointer;width:100%}
+.card:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.ribbon{background:linear-gradient(90deg,#16a34a,#22c55e 30%,#14b8a6 75%,#0d9488);border-bottom:2.5px solid var(--y2);box-shadow:0 3px 8px #14b8a625;color:#fff}
+#start{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:11px;z-index:5}
+.banner{background:#fffF;border:2px solid #34d399;border-radius:16px;padding:14px;box-shadow:0 4px 12px #0f172a12}
+.tagline{display:inline-flex;gap:6px;align-items:center;background:linear-gradient(90deg,#10b981,#14b8a6);color:#fff;font-size:11px;font-weight:900;padding:3px 10px;border-radius:99px;margin-bottom:8px}
+h1{margin:0;font-size:23px;line-height:1.18;color:#1e293b;font-weight:900}
+h1 span{font-size:19px;background:linear-gradient(90deg,#059669,#14b8a6,#0284c7);-webkit-background-clip:text;background-clip:text;color:transparent}
+.banner p{margin:8px 0 0;font-size:12px;line-height:1.65;color:#475569;font-weight:600}
+.hl{color:#ea580c;font-weight:900;text-decoration:underline;text-decoration-color:#fbbf24;text-decoration-thickness:2px}
+.sect{display:flex;align-items:center;gap:6px;padding:0 2px;font-size:12px;font-weight:900;color:#065f46}
+.dot{width:10px;height:10px;border-radius:99px;background:#10b981}
+.presets{display:flex;flex-direction:column;gap:8px}
+.pcard{padding:10px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.scene-tag{display:inline-block;font-size:10px;font-weight:900;padding:2px 7px;border-radius:6px}
+.t-g{background:#d1fae5;color:#047857}.t-b{background:#e0f2fe;color:#0369a1}.t-o{background:#ffedd5;color:#c2410c}.t-p{background:#fce7f3;color:#be185d}
+.pcard p{margin:3px 0 0;font-size:13.5px;font-weight:900;color:#1e293b}
+.pcard small{font-size:11px;color:#64748b;font-weight:600;display:block;margin-top:2px;line-height:1.4}
+.play{width:32px;height:32px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.custom{background:#fffF;border:2px solid #fcd34d;border-radius:16px;padding:12px}
+.custom label{font-size:11.5px;font-weight:900;color:#92400e;display:block;margin-bottom:6px}
+textarea{width:100%;padding:10px;border-radius:12px;border:1px solid #fcd34d;background:#fffbeb99;font-family:inherit;font-size:14px;font-weight:600;color:#1e293b;resize:none;outline:none}
+textarea:focus{border-color:#10b981;background:#fff}
+.wide{width:100%;padding:13px;border-radius:99px;font-size:14px;letter-spacing:.04em;margin-top:8px}
+.foot{display:flex;gap:6px;align-items:center;justify-content:space-between;font-size:10.5px;color:#64748b;font-weight:700;padding-bottom:6px}
+.mini{font-size:11px;font-weight:900;padding:6px 10px;border-radius:99px;border:1px solid var(--line);background:#fff;color:#475569;cursor:pointer}
+#game{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+header{display:flex;align-items:center;gap:5px;padding:7px 9px;flex-shrink:0;z-index:10}
+.turn{background:#fff;color:#047857;font-size:10px;font-weight:900;padding:3px 8px;border-radius:99px;border:1px solid #fcd34d;white-space:nowrap}
+#loc{font-size:11.5px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;text-shadow:0 1px 2px #00000030}
+.hbtns{display:flex;gap:4px;flex-shrink:0}
+.hbtn{font-size:10px;font-weight:900;padding:5px 8px;border-radius:99px;border:none;cursor:pointer}
+.hbtn:disabled{opacity:.42;pointer-events:none}
+.hbtn.w{background:#fffF;color:#047857;border:1px solid #a7f3d0}
+.hbtn.mode{background:#fff;color:#065f46;border:1px solid #34d399}
+.hbtn.mode.b2{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd}
+.hbtn.mode.b3{background:#fff7ed;color:#c2410c;border-color:#fdba74}
+.vpwrap{padding:8px 11px 5px;flex-shrink:0}
+.vp{position:relative;width:100%;aspect-ratio:16/10;max-height:225px;border-radius:16px;background:#0f172a;overflow:hidden;border:3px solid #fff;box-shadow:0 0 0 2px var(--gold),0 6px 16px #0f172a29}
+#pov{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s;display:block}
+#pov.on{opacity:1}
+.camtag{position:absolute;top:6px;left:6px;display:flex;align-items:center;gap:5px;background:#0008;border:1px solid #fff6;border-radius:99px;padding:3px 9px;backdrop-filter:blur(6px);pointer-events:none}
+.camtag i{width:6px;height:6px;border-radius:99px;background:#34d399;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.camtag span{font-size:9.5px;font-weight:900;color:#fff;letter-spacing:.07em}
+.meterbar{position:absolute;bottom:6px;left:6px;right:6px;display:flex;align-items:center;justify-content:space-between;gap:6px;pointer-events:none}
+.meter{display:flex;align-items:center;gap:6px;background:#fffF;border:1px solid var(--gold);border-radius:99px;padding:3px 9px;max-width:74%;backdrop-filter:blur(6px)}
+#statb{font-size:10px;font-weight:900;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{width:38px;height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;flex-shrink:0}
+#abar{height:100%;width:5%;background:linear-gradient(90deg,#34d399,#fbbf24,#f43f5e);transition:width .5s}
+.redraw{pointer-events:auto;background:#fffF;border:1px solid var(--line);border-radius:99px;padding:3px 9px;font-size:10px;font-weight:900;color:#334155;cursor:pointer}
+.drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#0b1220cc;color:#e2e8f0;cursor:pointer;text-align:center;padding:12px;border:2px dashed #ffffff40;border-radius:12px;margin:6px}
+.drop b{font-size:11.5px;font-weight:900}
+.drop small{font-size:10px;opacity:.75;font-weight:700;line-height:1.5}
+.loading{position:absolute;inset:0;background:#ffffffdd;backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;z-index:10;padding:14px;text-align:center}
+.spin{width:34px;height:34px;border-radius:99px;border:4px solid #a7f3d0;border-top-color:#10b981;border-right-color:#fbbf24;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading b{font-size:11px;color:#065f46;letter-spacing:.09em}
+.main{flex:1;display:flex;flex-direction:column;padding:4px 11px 10px;overflow:hidden;min-height:0;gap:6px}
+.dlg{background:#fffffff7;border:2.5px solid var(--g2);border-radius:16px;box-shadow:0 4px 12px #2ecc7124,inset 0 0 0 2px #f0fdf4;padding:9px;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.dlghead{display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid #d1fae5;padding-bottom:5px;margin-bottom:5px;flex-shrink:0}
+.dlghead span{font-size:11px;font-weight:900;color:#047857}
+#lastact{font-size:10px;font-weight:900;background:#fef3c7;color:#92400e;border-radius:99px;padding:2px 8px;max-width:66%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#narr{flex:1;overflow-y:auto;font-size:13.5px;line-height:1.7;font-weight:700;color:#1e293b;margin:0;padding-right:2px}
+.ctl{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+#choices{display:flex;flex-direction:column;gap:5px}
+.ch{display:flex;align-items:center;gap:8px;padding:8px 9px}
+.ch .k{width:23px;height:23px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0;border:2px solid #fff}
+.ch .t{font-size:12.5px;font-weight:800;color:#1e293b;line-height:1.35;flex:1}
+.chips{display:flex;gap:5px;overflow-x:auto;padding-top:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips .lbl{font-size:10px;font-weight:900;background:#d1fae5;color:#065f46;border-radius:99px;padding:3px 8px;flex-shrink:0}
+.chip{font-size:10px;font-weight:900;background:#fff;border:1px solid #6ee7b7;color:#047857;border-radius:99px;padding:3px 9px;flex-shrink:0;cursor:pointer}
+.chip.y{border-color:#fcd34d;color:#b45309}.chip.s{border-color:#7dd3fc;color:#0369a1}
+form{display:flex;gap:6px;padding-top:2px}
+#free{flex:1;min-width:0;font-size:16px;font-weight:700;padding:10px 14px;border-radius:99px;border:2px solid var(--g2);background:#fff;color:#1e293b;outline:none;font-family:inherit}
+#free:focus{border-color:#0ea5e9}
+#send{font-size:12.5px;padding:10px 16px;border-radius:99px;flex-shrink:0}
+.bridge{position:absolute;left:0;right:0;bottom:0;background:#0f172af7;backdrop-filter:blur(8px);color:#e2e8f0;z-index:25;padding:11px 12px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:7px;border-top:3px solid var(--gold);max-height:88%;overflow-y:auto}
+.bridge h3{margin:0;font-size:12.5px;font-weight:900;color:#fde68a;display:flex;justify-content:space-between;align-items:center}
+.bridge h3 button{background:#ffffff1f;border:1px solid #ffffff33;color:#e2e8f0;border-radius:99px;font-size:11px;font-weight:900;padding:4px 10px;cursor:pointer}
+.step{font-size:10.5px;font-weight:800;color:#94a3b8;line-height:1.55}
+.pk{background:#020617;border:1px solid #334155;border-radius:10px;padding:8px;font-family:ui-monospace,monospace;font-size:10.5px;color:#a5f3fc;max-height:104px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.5}
+.bridge textarea{background:#020617;border:1px solid #334155;color:#e2e8f0;font-family:ui-monospace,monospace;font-size:11px;min-height:60px}
+.bridge .row{display:flex;gap:6px}
+.bridge .row button{flex:1;padding:10px;border-radius:99px;font-size:12px;font-weight:900}
+.modal{position:absolute;inset:0;background:#0f172a99;backdrop-filter:blur(3px);z-index:30;display:flex;flex-direction:column;padding:11px}
+.sheet{flex:1;background:var(--cream);border:2px solid #fff;border-radius:22px;box-shadow:0 20px 50px -20px #0008;display:flex;flex-direction:column;overflow:hidden}
+.sheet .ribbon{display:flex;align-items:center;justify-content:space-between;padding:10px 12px}
+.sheet .ribbon h2{margin:0;font-size:12.5px;font-weight:900;color:#fff}
+.x{width:26px;height:26px;border-radius:99px;background:#fff;color:#047857;border:none;font-weight:900;font-size:13px;cursor:pointer}
+#hist{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.hitem{background:#fff;border:2px solid #a7f3d0;border-radius:14px;overflow:hidden}
+.hitem img{width:100%;height:130px;object-fit:cover;display:block;border-bottom:1px solid #d1fae5;background:#0f172a}
+.hitem .b{padding:8px;display:flex;flex-direction:column;gap:3px}
+.hitem .m{display:flex;justify-content:space-between;font-size:10px;font-weight:900}
+.hitem .m .tt{background:#d1fae5;color:#047857;border-radius:99px;padding:1px 7px}
+.hitem .m .ll{color:#64748b}
+.hitem .a{font-size:11px;font-weight:900;color:#ea580c;margin:0}
+.hitem .n{font-size:12px;font-weight:700;color:#334155;margin:0;line-height:1.6}
+#dlgbox{position:absolute;inset:0;background:#0f172a99;backdrop-filter:blur(3px);z-index:40;display:flex;align-items:center;justify-content:center;padding:18px}
+.dbox{width:100%;max-width:310px;background:#fff;border:2px solid var(--g2);border-radius:22px;padding:16px;box-shadow:0 20px 50px -20px #0008}
+.dbox h3{margin:0 0 6px;font-size:15px;font-weight:900;color:#1e293b}
+.dbox p{margin:0 0 14px;font-size:12px;font-weight:700;color:#475569;line-height:1.6}
+.dbox .row{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.dbox button{font-size:12px;font-weight:900;padding:8px 14px;border-radius:99px;border:none;cursor:pointer}
+#setbody{padding:13px;display:flex;flex-direction:column;gap:11px;overflow-y:auto}
+#setbody label{font-size:11.5px;font-weight:900;color:#065f46;display:block;margin-bottom:4px}
+#setbody input,#setbody select{width:100%;font-size:15px;padding:10px;border-radius:11px;border:1px solid var(--line);outline:none;font-family:inherit;background:#fff}
+#setbody input:focus,#setbody select:focus{border-color:#10b981}
+.hint{font-size:10.5px;color:#64748b;font-weight:700;line-height:1.55;margin:4px 0 0}
+.hint.warn{color:#b45309}
+.seg{display:flex;gap:5px}
+.seg button{flex:1;font-size:11.5px;font-weight:900;padding:9px 4px;border-radius:11px;border:1px solid var(--line);background:#fff;color:#64748b;cursor:pointer}
+.seg button.on{background:linear-gradient(180deg,var(--g1),var(--g3));color:#fff;border-color:#fff;box-shadow:0 2px 0 var(--g4)}
+#toast{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:5px;align-items:center;pointer-events:none;width:calc(100% - 24px)}
+.tst{font-size:11.5px;font-weight:900;padding:7px 13px;border-radius:99px;background:#065f46e6;color:#d1fae5;border:1px solid #34d399;animation:tin .25s ease both,tout .4s ease 2.1s both;text-align:center}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}}
+@keyframes tout{to{opacity:0;transform:translateY(-8px)}}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="start">
+  <div class="banner">
+    <div class="tagline">▶ 美麗ゲームCG風 × 現代日本サンドボックス</div>
+    <h1>REAL JAPAN<br><span>自由行動シミュレーター</span></h1>
+    <p>舞台はごく普通の現代日本。選択肢でも、自由記述で<span class="hl">「行動の結果」まで指定</span>してもいい。書いた結果は全部通る。世界は全力で慌てる。</p>
+  </div>
+  <div class="sect"><span class="dot"></span>スタートする日常シーンを選択</div>
+  <div class="presets">
+    <button class="card pcard" data-scene="朝の通勤ラッシュ・新宿駅ホーム。平日の朝8時15分、スーツ姿の会社員や学生が足早に行き交い、発車ベルが鳴り響いている。自分の手にはスマホとICカード、そして買いたての缶コーヒーがある。">
+      <div><span class="scene-tag t-g">SCENE 01</span><p>朝の通勤ラッシュ・新宿駅ホーム</p><small>満員電車に乗るもよし、予測不能な行動を起こすもよし</small></div>
+      <div class="play btn-g glossy">▶</div></button>
+    <button class="card pcard" data-scene="昼休みの駅前コンビニ。昼12時30分、お弁当やサンドイッチを選ぶ会社員や学生で賑わい、レジ前には数人の列ができている。店内の有線放送では最新のJ-POPが流れている。">
+      <div><span class="scene-tag t-b">SCENE 02</span><p>昼休みの駅前コンビニ</p><small>お弁当を買う日常から、自由なドラマが始まる</small></div>
+      <div class="play btn-b glossy">▶</div></button>
+    <button class="card pcard" data-scene="放課後・夕暮れの商店街。夕方17時過ぎ、東京の下町にある商店街にはコロッケを揚げる香ばしい匂いが漂い、買い物客や下校途中の学生たちが歩いている。夕焼け空がアーケードの隙間から差し込んでいる。">
+      <div><span class="scene-tag t-o">SCENE 03</span><p>放課後・夕暮れの商店街</p><small>平和な商店街でどんな自由行動を起こす？</small></div>
+      <div class="play btn-o glossy">▶</div></button>
+    <button class="card pcard" data-scene="深夜2時のファミリーレストラン。国道沿いのファミレスの窓際席。ドリンクバーの氷が溶ける音と、離れた席で小声で話す客の声だけが聞こえる静かな深夜。窓の外では時折ヘッドライトが通り過ぎる。">
+      <div><span class="scene-tag t-p">SCENE 04</span><p>深夜2時のファミリーレストラン</p><small>真夜中の静寂を破る自由な行動へ</small></div>
+      <div class="play btn-p glossy">▶</div></button>
+  </div>
+  <div class="custom">
+    <label>✦ 好きな場所・状況から始める</label>
+    <textarea id="custom-in" rows="2" placeholder="例：日曜日の昼下がり、渋谷のカフェのテラス席でアイスラテを飲んでいる"></textarea>
+    <button class="wide btn-g glossy" id="go-custom">この場所からスタート！</button>
+  </div>
+  <div class="foot"><span id="mode-note">接続待ち</span><button class="mini" id="open-set">⚙ 設定 / APIキー</button></div>
+</div>
+
+<div id="game" class="hide">
+  <header class="ribbon">
+    <span class="turn" id="turnb">TURN 01</span>
+    <span id="loc">現在地</span>
+    <div class="hbtns">
+      <button class="hbtn btn-y glossy" id="undo" disabled>↩</button>
+      <button class="hbtn w" id="hist-btn">履歴</button>
+      <button class="hbtn mode" id="mode-btn">Venice</button>
+      <button class="hbtn w" id="home">⌂</button>
+    </div>
+  </header>
+  <div class="vpwrap">
+    <div class="vp">
+      <img id="pov" alt="一人称視点シーン">
+      <div class="camtag"><i></i><span>1ST PERSON POV // 3D CG</span></div>
+      <div class="meterbar">
+        <div class="meter"><span id="statb">注目度 0%: 平穏な日常</span><div class="track"><div id="abar"></div></div></div>
+        <button class="redraw" id="redraw">再描画</button>
+      </div>
+      <div class="drop hide" id="drop"><b>仮CGを描き直す（無料）</b><small>AIのCGが欲しいときは右下の「再描画」</small></div>
+      <div class="loading hide" id="load"><div class="spin"></div><b id="loadt">GENERATING...</b></div>
+    </div>
+  </div>
+  <input type="file" id="file" accept="image/*" class="hide">
+  <div class="main">
+    <div class="dlg">
+      <div class="dlghead"><span>◆ 現在の状況</span><span id="lastact" class="hide"></span></div>
+      <p id="narr">読み込み中...</p>
+    </div>
+    <div class="ctl">
+      <div id="choices"></div>
+      <div class="chips">
+        <span class="lbl">結果操作:</span>
+        <button class="chip" data-t="〜した結果、完璧に大成功して">+ 大成功させる</button>
+        <button class="chip y" data-t="すると偶然にも目の前で〇〇が起き、">+ 偶然の展開</button>
+        <button class="chip s" data-t="周囲の人たちがなぜか全員感心して味方になり、">+ 周囲の反応を変える</button>
+      </div>
+      <form id="frm">
+        <input id="free" type="text" autocomplete="off" placeholder="行動や『結果』を自由に入力...">
+        <button class="btn-p glossy" id="send" type="submit">実行</button>
+      </form>
+    </div>
+  </div>
+  <div class="bridge hide" id="bridge">
+    <h3><span>手動モード（コピペ）</span><button id="br-x">閉じる</button></h3>
+    <div class="step">パケットをコピーして外部AIに渡し、返ったJSONを下に貼って反映します。</div>
+    <div class="pk" id="pk"></div>
+    <div class="row"><button class="btn-y glossy" id="br-copy">コピー</button></div>
+    <textarea id="imp" placeholder='{"location":"...","attentionLevel":42,"statusLabel":"...","narration":"...","choices":[{"label":"...","type":"normal"}]}'></textarea>
+    <div class="row"><button class="btn-g glossy" id="br-apply">反映</button></div>
+  </div>
+</div>
+
+<div class="modal hide" id="histm">
+  <div class="sheet">
+    <div class="ribbon"><h2>行動アーカイブ & CGアルバム</h2><button class="x" id="hist-x">✕</button></div>
+    <div id="hist"></div>
+  </div>
+</div>
+
+<div class="hide" id="dlgbox"><div class="dbox"><h3 id="dtitle">確認</h3><p id="dmsg"></p><div class="row" id="dbtns"></div></div></div>
+
+<div class="modal hide" id="setm">
+  <div class="sheet">
+    <div class="ribbon"><h2>⚙ 設定</h2><button class="x" id="set-x">✕</button></div>
+    <div id="setbody">
+      <div>
+        <label>Venice APIキー</label>
+        <input id="keyin" type="password" placeholder="venice_..." autocomplete="off">
+        <p class="hint">https://venice.ai/settings/api で発行。この端末のlocalStorageにのみ保存される。個人使用ならこれで十分。</p>
+        <p class="hint warn">無料モデルはレート制限あり。429が出たら少し待って再試行。</p>
+      </div>
+      <div>
+        <label>テキストモデル</label>
+        <select id="tmodel"><option value="">（先にモデル一覧を取得）</option></select>
+        <p class="hint">★無料が付いたものが無料枠。先頭に自動で並ぶ。</p>
+      </div>
+      <div>
+        <label>画像モデル</label>
+        <select id="imodel"><option value="flux-dev">flux-dev</option></select>
+        <p class="hint">CG生成時のみ使用。課金対象。</p>
+      </div>
+      <button class="wide btn-b glossy" id="fetch-models">モデル一覧を取得</button>
+      <div>
+        <label>画像生成</label>
+        <div class="seg" id="imseg">
+          <button data-v="on">毎ターン生成</button>
+          <button data-v="off" class="on">切る</button>
+        </div>
+        <p class="hint">切っておけば、CGは「再描画」を押したときだけ1枚生成される。</p>
+      </div>
+      <button class="wide btn-g glossy" id="set-save">保存して接続テスト</button>
+      <button class="wide btn-y glossy" id="set-clear">キーを削除</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const rnd=n=>Math.floor(Math.random()*n);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function mul(s){let t=s>>>0;return function(){t+=0x6D2B79F5;let r=Math.imul(t^t>>>15,1|t);r^=r+Math.imul(r^r>>>7,61|r);return((r^r>>>14)>>>0)/4294967296;};}
+const KEY="rj4_state";
+const API="https://api.venice.ai/api/v1";
+
+const SET={key:"",tmodel:"",imodel:"flux-dev",img:"off"};
+try{Object.assign(SET,JSON.parse(localStorage.getItem("rj4_set")||"{}"));}catch(e){}
+function saveSet(){localStorage.setItem("rj4_set",JSON.stringify(SET));note();}
+function note(){$("mode-note").textContent=SET.key?"接続設定あり・Venice稼働可":"未接続（設定からキーを入力）";}
+
+const G={turn:0,loc:"",cat:"street",att:0,label:"平穏な日常",narr:"",choices:[],archive:[],undo:[],mode:"venice",pending:null,imgPrompt:"",busy:false,history:[]};
+
+const CATS={
+ station:{spots:["JR新宿駅・中央線ホーム","山手線の車内","駅の階段","改札前"],npcs:["スーツの会社員","女子高生","旅行者","駅員","酔客"],normal:["自販機でコーヒーを買う","一本見送ってベンチに座る","スマホで乗換を調べる"],bold:["満員電車に無理やり乗り込む","駅員に構内を案内してもらう","ホームの端まで全力で歩く"],chaos:["発車ベルに合わせて全力疾走する","改札前で大声で挨拶する","ホームでラジオ体操を始める"],b:"cool",n:"駅の冷たい空気"},
+ conbini:{spots:["駅前コンビニの店内","レジ前の列","おにぎり棚の前"],npcs:["レジの店員","弁当を選ぶ会社員","小銭を探す学生"],normal:["おにぎりを買う","ホットスナックを選ぶ","コーヒーマシンを操作する"],bold:["店員に一番売れてる商品を聞く","レジで小銭をばらまいて払う","棚の商品を全部裏返す"],chaos:["店内放送を借りて実況する","店員と一緒に品出しを始める","万札でガムを買う"],b:"bright",n:"蛍光灯の白い光"},
+ shotengai:{spots:["アーケードの中央","コロッケ屋の前","八百屋の店先"],npcs:["コロッケ屋の店主","買い物袋の主婦","下校中の学生","猫"],normal:["コロッケを一つ買って食う","猫を撫でる","値札を眺める"],bold:["店主と値段交渉する","福引を回す","路地の奥を覗く"],chaos:["アーケードで大道芸を始める","全店に挨拶して回る","景品を全部当てると宣言する"],b:"warm",n:"揚げ油の香ばしい匂い"},
+ famires:{spots:["窓際の席","ドリンクバーの前","レジカウンター"],npcs:["居眠りする客","ホールの店員","小声で話すカップル"],normal:["炭酸を注ぐ","メニューを端から読む","ポテトを注文する"],bold:["深夜限定メニューを聞く","一番いい席に移る","厨房の音に聞き耳を立てる"],chaos:["BGMに合わせて机を叩き続ける","店員を呼んで延々と雑談する","朝まで居座ると宣言する"],b:"night",n:"氷が溶ける音だけの静寂"},
+ school:{spots:["放課後の廊下","教室","昇降口"],npcs:["制服の生徒","部活帰りの男子","先生","掃除当番"],normal:["教室でだらっとする","自販機でジュースを買う","椅子に座って外を見る"],bold:["職員室に乱入する","掃除を手伝う","部活の見学を申し込む"],chaos:["廊下で全校集会を始める","校庭で号令をかける","放送室のマイクを奪う"],b:"warm",n:"木の床と夕方のチャイム"},
+ office:{spots:["フロアの中央","給湯室","会議室前"],npcs:["ネクタイの上司","書類を抱えた同僚","清掃スタッフ"],normal:["コピーを取る","湯を沸かす","デスクを片付ける"],bold:["上司に直談判する","差し入れを配る","名刺を配って回る"],chaos:["椅子を全部回転させる","ホワイトボードに社訓を書く","全社放送に電話をつなぐ"],b:"cool",n:"空調の低い唸り"},
+ park:{spots:["噴水の前","ベンチ","芝生"],npcs:["散歩の老人","犬を連れた人","鳩","ジョギング中の男"],normal:["ベンチに座る","鳩にパンくずをやる","芝生に寝転ぶ"],bold:["犬を勝手に撫でる","ジョギングに混ざる","知らない人に話しかける"],chaos:["公園全体に挨拶して回る","噴水で大げさに感動する","ベンチで詩を朗読する"],b:"green",n:"木漏れ日と遠い子供の声"},
+ street:{spots:["スクランブル交差点","ビル街の路地","ネオン看板の下","カフェのテラス"],npcs:["キャッチの店員","写真を撮る観光客","路上ミュージシャン","配達員"],normal:["カフェでラテを頼む","交差点を渡る","路上の演奏を聴く"],bold:["キャッチに捕まってみる","歩道橋から街を撮る","知らない店に入る"],chaos:["交差点で号令をかける","路上ミュージシャンの横で踊る","全員にハイタッチを求める"],b:"neon",n:"ネオンと人の熱"}
+};
+function catOf(t){t=t||"";
+ if(/駅|ホーム|改札|電車|車内/.test(t))return"station";
+ if(/コンビニ|レジ|おにぎり/.test(t))return"conbini";
+ if(/商店街|アーケード|コロッケ|八百屋/.test(t))return"shotengai";
+ if(/ファミレス|深夜2|ドリンクバー/.test(t))return"famires";
+ if(/学校|教室|廊下|放課後|生徒/.test(t))return"school";
+ if(/オフィス|会議|上司|会社/.test(t))return"office";
+ if(/公園|ベンチ|噴水|芝生/.test(t))return"park";
+ return"street";}
+const STAGES=[[0,"平穏な日常"],[15,"周囲がザワつき始めた"],[35,"人だかりができている"],[55,"SNSで拡散中"],[75,"SNSトレンド入り！"],[90,"警察が急行中"]];
+function labelFor(a){let l="平穏な日常";for(const[s,n]of STAGES)if(a>=s)l=n;return l;}
+
+function dialog(t,m,bs){$("dtitle").textContent=t;$("dmsg").textContent=m;const b=$("dbtns");b.innerHTML="";
+ bs.forEach(x=>{const el=document.createElement("button");el.textContent=x.label;
+  el.className=x.primary?"btn-g glossy":"btn-y glossy";if(!x.primary)el.style.color="#334155";
+  el.onclick=()=>{$("dlgbox").classList.add("hide");if(x.fn)x.fn();};b.appendChild(el);});
+ $("dlgbox").classList.remove("hide");}
+function toast(t){const d=document.createElement("div");d.className="tst";d.textContent=t;$("toast").appendChild(d);setTimeout(()=>d.remove(),2600);}
+
+const cv=document.createElement("canvas");
+const PAL={cool:["#0b1626","#20415f","#7fd4ff"],bright:["#132a22","#2f6b4a","#c9f56b"],warm:["#2a1408","#7a3d14","#ffc46b"],night:["#0a0a14","#2a2140","#ff8ab3"],green:["#0d1f14","#2c5a37","#9bf07a"],neon:["#0a0a1c","#2b1444","#ff4d9d"],street:["#0a0c18","#1d2440","#ffb454"]};
+function drawPOV(){
+ const w=cv.width=560,h=cv.height=350,ctx=cv.getContext("2d"),R=mul(G.turn*977+11);
+ const p=PAL[(CATS[G.cat]||CATS.street).b]||PAL.street,hz=h*.46,vx=w*.5;
+ const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,p[0]);g.addColorStop(.55,p[1]);g.addColorStop(1,p[0]);
+ ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+ for(let i=0;i<5;i++){const r=40+R()*90,x=R()*w,y=R()*hz,bg=ctx.createRadialGradient(x,y,0,x,y,r);bg.addColorStop(0,p[2]+"88");bg.addColorStop(1,"#0000");ctx.fillStyle=bg;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
+ ctx.fillStyle="#00000055";ctx.fillRect(0,hz,w,h-hz);
+ ctx.strokeStyle=p[2]+"33";ctx.lineWidth=1.4;
+ for(let i=-6;i<=6;i++){ctx.beginPath();ctx.moveTo(vx+i*7,hz);ctx.lineTo(vx+i*180,h);ctx.stroke();}
+ for(let i=1;i<7;i++){const y=hz+Math.pow(i/7,2.1)*(h-hz);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+ ctx.fillStyle="#00000066";
+ for(let s=-1;s<=1;s+=2)for(let k=0;k<5;k++){const d=1+k*.9,xw=w*(.5-s*.5/d),bw=w*.16/d,bh=h*.5/d;ctx.globalAlpha=.55-k*.07;ctx.fillRect(s<0?xw-bw:xw,hz-bh,bw,bh);}
+ ctx.globalAlpha=1;
+ const n=2+Math.floor(G.att/12);
+ for(let i=0;i<n;i++){const d=.35+R()*1.5,y=hz+R()*(h-hz)*.9,s=(h*.5)/d,x=w*.5+(R()-.5)*w*1.15,bh=s*.42,bw=s*.12;
+  ctx.fillStyle="#05070e";ctx.globalAlpha=.82;
+  ctx.beginPath();ctx.ellipse(x,y,bw*.8,bh,0,0,7);ctx.fill();
+  ctx.beginPath();ctx.arc(x,y-bh-bw*.9,bw*.85,0,7);ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle=p[2]+"cc";ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(x-bw*.5,y,bw*.5,bh,0,Math.PI*.4,Math.PI*1.5);ctx.stroke();}
+ if(G.att>=90){ctx.fillStyle=Math.sin(Date.now()/160)>0?"#ff223355":"#2255ff44";ctx.fillRect(0,0,w,h);}
+ const vg=ctx.createRadialGradient(w/2,h*.5,h*.22,w/2,h*.5,h*.95);vg.addColorStop(0,"#0000");vg.addColorStop(1,"#000000bb");
+ ctx.fillStyle=vg;ctx.fillRect(0,0,w,h);
+ for(let i=0;i<200;i++){ctx.globalAlpha=R()*.05;ctx.fillStyle="#fff";ctx.fillRect(R()*w,R()*h,1.5,1.5);}
+ ctx.globalAlpha=1;return cv.toDataURL("image/png");
+}
+
+function detect(t){
+ if(/走|逃|移動|向か|行く|歩/.test(t))return"move";
+ if(/叫|大声|演説|号令|歌|踊|体操/.test(t))return"perform";
+ if(/話|聞|挨拶|交渉|頼|誘/.test(t))return"talk";
+ if(/買|食|飲|注文/.test(t))return"buy";
+ if(/撮|写真|自撮|配信/.test(t))return"shoot";
+ if(/手伝|働|掃除|配る/.test(t))return"help";
+ if(/調べ|探|見|読|観察/.test(t))return"search";
+ if(/座|寝|休|だら|眺/.test(t))return"rest";
+ if(/触|撫|抱|ハイタッチ/.test(t))return"touch";
+ if(/宣言|全部|全員|革命|乗っ取/.test(t))return"declare";
+ return"act";}
+const DELTA={move:2,perform:9,talk:4,buy:1,shoot:5,help:5,search:2,rest:-1,touch:3,declare:11,act:4};
+const OUT={move:["足を止めずに進んだ。"],perform:["声が思ったより大きく響いた。"],talk:["言葉を選んで声をかけた。"],buy:["手早く会計を済ませた。"],shoot:["スマホを構えてシャッターを切った。"],help:["手を動かし始めた。"],search:["目を凝らして観察した。"],rest:["ゆっくり息を吐いた。"],touch:["触れた瞬間、相手が固まった。"],declare:["言い切った。引っ込める気はない。"],act:["とりあえず、やってみた。"]};
+const REACT=[[0,["誰も気に留めていない。"]],[15,["近くの数人がちらりと視線を向けた。"]],[35,["いつの間にか半円の人だかりができている。"]],[55,["数人がスマホを構え始めた。"]],[75,["「あの人SNSで見た」と指をさす声。"]],[90,["遠くでパトカーのサイレンが近づいてくる。"]]];
+function reaction(a){let o=["誰も気に留めていない。"];for(const[s,p]of REACT)if(a>=s)o=p;return pick(o);}
+function splitResult(t){const m=t.match(/(?:した結果|したら|結果)[、,:：\s]*(.+)$/);return m&&m[1]&&m[1].length>3?{act:t.slice(0,m.index).trim()||t,res:m[1].trim()}:{act:t,res:null};}
+function soloScene(text,isStart){
+ const P=isStart?{act:text,res:null}:splitResult(text);
+ const C=CATS[G.cat]||CATS.street,kind=isStart?"start":detect(P.act);
+ let att=isStart?rnd(8):clamp(G.att+((kind==="rest"||kind==="buy")?-2:DELTA[kind]||4)+rnd(9)-3,0,100);
+ if(P.res)att=clamp(att+6,0,100);
+ const npc=pick(C.npcs),loc=isStart?pick(C.spots):(Math.random()<.3?pick(C.spots):G.loc||pick(C.spots));
+ const parts=[];
+ if(isStart){parts.push(text.trim().replace(/[。]$/,"")+"。",`${npc}が近くを通り過ぎ、${C.n}が漂っている。`,"ここから何をしてもいい。");}
+ else if(P.res){parts.push(`「${P.act}」——${P.res}`,`${npc}が息を呑む。${reaction(att)}`);}
+ else{parts.push(pick(OUT[kind]),`${npc}がこちらを見て、${pick(["小さく首を傾げた","足を止めた","スマホを握り直した"])}。`,reaction(att));}
+ return{location:loc,attentionLevel:att,statusLabel:labelFor(att),narration:parts.join(""),
+  choices:[{label:pick(C.normal),type:"normal"},{label:pick(C.bold),type:"bold"},{label:pick(C.chaos),type:"chaos"}],
+  imagePrompt:`First-person POV, ${loc}, ${npc}`};
+}
+
+const SYS=`あなたは『REAL JAPAN: 自由行動シミュレーター』のAIゲームマスター。
+舞台はごく普通のリアルな現代日本（電車、コンビニ、商店街、学校、オフィス、ファミレス、繁華街など）。
+1. 世界観のベースは普通の現代日本。SF/ファンタジーは基本出さない。
+2. 破天荒な行動には、現代日本の人々・警察・SNSがリアルに驚き騒然とする形で反応させる。説教せず楽しく。
+3. プレイヤーが「〜した結果、〇〇」と結果まで指定したら、その結果を100%事実として受け入れ、そこから進める。
+4. narrationは日本語110〜175字。一人称視点で、目の前の光景と周囲の反応を生き生きと。
+5. choicesは normal（堅実）/ bold（大胆）/ chaos（予想外）の3つ。
+6. attentionLevelは0〜100の整数で、直前より大きく動かしすぎない（±25以内）。
+7. 出力はJSONオブジェクトのみ。前後に文章やコードフェンスを付けない。
+キー: location, attentionLevel, statusLabel, narration, choices[{label,type}], imagePrompt
+imagePromptは必ず"First-person POV,"で始まる英語。ウマ娘/原神のような3DCGアニメゲーム調（非フォトリアル）。武器・血・爆発の直接語は避け、視覚表現に置換する。`;
+
+function headers(extra){return Object.assign({"Authorization":"Bearer "+SET.key,"Content-Type":"application/json"},extra||{});}
+async function chat(messages){
+ const body={model:SET.tmodel,messages,temperature:0.9,max_tokens:900,
+  venice_parameters:{include_venice_system_prompt:false}};
+ const r=await fetch(API+"/chat/completions",{method:"POST",headers:headers(),body:JSON.stringify(body)});
+ if(!r.ok){const txt=await r.text().catch(()=>"");throw new Error(r.status===401||r.status===403?"AUTH":"HTTP "+r.status+" "+txt.slice(0,120));}
+ const j=await r.json();
+ return j?.choices?.[0]?.message?.content||"";
+}
+function parseJSON(t){
+ if(!t)return null;
+ const cands=[];
+ const f=t.indexOf("{"),l=t.lastIndexOf("}");
+ if(f>=0&&l>f)cands.push(t.slice(f,l+1));
+ const m=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(m)cands.unshift(m[1]);
+ for(const c of cands){try{const o=JSON.parse(c.trim());if(o&&(o.narration||o.location))return o;}catch(e){}}
+ return null;
+}
+async function veniceScene(action,isStart){
+ const userMsg=isStart?`【開始シーン】${action}\nこの日常から開始せよ。`:`【プレイヤーの行動】${action}`;
+ const hist=[...G.history,{role:"user",content:userMsg}].slice(-12);
+ let txt=await chat([{role:"system",content:SYS},...hist]);
+ let o=parseJSON(txt);
+ if(!o){
+  txt=await chat([{role:"system",content:SYS},...hist,{role:"user",content:"JSONのみで再出力せよ。"}]);
+  o=parseJSON(txt);
+ }
+ if(!o)throw new Error("PARSE");
+ G.history=[...hist,{role:"assistant",content:JSON.stringify(o)}].slice(-12);
+ return o;
+}
+function sanitize(s){return String(s||"")
+ .replace(/\b(gun|pistol|rifle|weapon)\b/gi,"sleek metallic prop")
+ .replace(/\b(knife|blade|sword|katana)\b/gi,"gleaming silver item")
+ .replace(/\b(blood|bloody|gore|corpse|dead)\b/gi,"dramatic crimson rim lighting")
+ .replace(/\b(bomb|explosion|grenade)\b/gi,"bright lens flare and dramatic sparks")
+ .replace(/\b(photorealistic|hyperrealistic|live-action)\b/gi,"stylized 3D anime game CG");}
+async function veniceImage(prompt){
+ const style="first-person POV, stylized anime character design in high-end 3D CG game style, cel-shaded 3D render, Uma Musume / Genshin Impact cutscene look, cinematic bloom, vibrant glossy colors, no UI, no text";
+ const body={model:SET.imodel,prompt:`${sanitize(prompt)}, ${style}`,width:1024,height:640,steps:24,
+  format:"png",safe_mode:false,hide_watermark:true};
+ const r=await fetch(API+"/image/generate",{method:"POST",headers:headers(),body:JSON.stringify(body)});
+ if(!r.ok)throw new Error("IMG "+r.status);
+ const j=await r.json();
+ const b=j?.images?.[0];
+ const b64=typeof b==="string"?b:(b?.b64_json||null);
+ if(!b64)throw new Error("IMG empty");
+ return b64.startsWith("data:")?b64:"data:image/png;base64,"+b64;
+}
+
+function renderScene(s,turnNum,actionText,imgUrl){
+ $("turnb").textContent="TURN "+String(turnNum).padStart(2,"0");
+ $("loc").textContent="◉ "+(s.location||"");
+ const lv=clamp(Number(s.attentionLevel)||0,0,100);
+ $("statb").textContent=`注目度 ${lv}%: ${s.statusLabel||labelFor(lv)}`;
+ $("abar").style.width=Math.max(5,lv)+"%";
+ if(actionText){$("lastact").textContent="行動: "+actionText;$("lastact").classList.remove("hide");}else $("lastact").classList.add("hide");
+ $("narr").textContent=s.narration||"";$("narr").scrollTop=0;
+ const box=$("choices");box.innerHTML="";
+ const st=[["btn-g","A","🚶"],["btn-b","B","⚡"],["btn-o","C","🔥"]];
+ (s.choices||[]).slice(0,3).forEach((c,i)=>{
+  const S2=st[i%3],b=document.createElement("button");
+  b.className="card ch";b.type="button";
+  b.innerHTML=`<span class="k ${S2[0]}">${S2[1]}</span><span class="t">${esc(c.label||c)}</span><span class="ic">${S2[2]}</span>`;
+  b.onclick=()=>submit(c.label||c);
+  box.appendChild(b);
+ });
+ if(imgUrl){$("pov").src=imgUrl;$("pov").classList.add("on");$("drop").classList.add("hide");}
+ else $("drop").classList.remove("hide");
+ save();
+}
+function lock(v){G.busy=v;$("free").disabled=v;$("send").disabled=v;
+ document.querySelectorAll("#choices button").forEach(b=>{b.disabled=v;b.style.opacity=v?.5:1;});
+ $("undo").disabled=v||!G.undo.length;}
+function setMode(m){
+ G.mode=m;
+ const b=$("mode-btn");
+ b.textContent=m==="venice"?"Venice":m==="bridge"?"コピペ":"ソロ";
+ b.classList.toggle("b2",m==="bridge");b.classList.toggle("b3",m==="solo");
+ save();
+}
+
+function submit(action){
+ if(G.busy)return;
+ G.pending=action;
+ const isStart=G.turn===0;
+ if(isStart)G.cat=catOf(action);
+ if(G.mode==="solo"){const s=soloScene(action,isStart);G.undo.push(snap(action));apply(s,action);return;}
+ if(G.mode==="bridge"){openBridge(action);return;}
+ runVenice(action,isStart);
+}
+function snap(action){return{turn:G.turn,loc:G.loc,cat:G.cat,att:G.att,label:G.label,narr:G.narr,
+ choices:JSON.parse(JSON.stringify(G.choices)),archive:JSON.parse(JSON.stringify(G.archive)),
+ history:JSON.parse(JSON.stringify(G.history)),
+ action:G.archive.length?G.archive[G.archive.length-1].action:null,
+ img:G.archive.length?G.archive[G.archive.length-1].img:null,submitted:action||""};}
+function apply(s,actionText){
+ G.turn++;
+ G.loc=s.location||G.loc;
+ G.att=clamp(Number(s.attentionLevel)||0,0,100);
+ G.label=s.statusLabel||labelFor(G.att);
+ G.narr=s.narration||"";
+ G.choices=Array.isArray(s.choices)&&s.choices.length?s.choices:(()=>{const C=CATS[G.cat]||CATS.street;return[{label:pick(C.normal),type:"normal"},{label:pick(C.bold),type:"bold"},{label:pick(C.chaos),type:"chaos"}];})();
+ G.imgPrompt=s.imagePrompt||G.imgPrompt;
+ const art=drawPOV();
+ G.archive.push({turn:G.turn,action:actionText||null,location:G.loc,narration:G.narr,img:art});
+ renderScene({location:G.loc,attentionLevel:G.att,statusLabel:G.label,narration:G.narr,choices:G.choices},G.turn,actionText,art);
+ G.pending=null;lock(false);$("bridge").classList.add("hide");$("free").value="";
+ return G.archive.length-1;
+}
+async function runVenice(action,isStart){
+ lock(true);
+ $("loadt").textContent="GENERATING WORLD...";
+ $("load").classList.remove("hide");
+ const undoLen=G.undo.length;
+ try{
+  if(!SET.key)throw new Error("AUTH");
+  if(!SET.tmodel)throw new Error("MODEL");
+  const s=await veniceScene(action,isStart);
+  G.undo.push(snap(action));
+  const idx=apply(s,isStart?null:action);
+  if(SET.img==="on"&&s.imagePrompt){
+   $("loadt").textContent="RENDERING CG...";
+   try{const u=await veniceImage(s.imagePrompt);$("pov").src=u;$("pov").classList.add("on");
+    G.archive[idx].img=u;save();}catch(e){toast("CG生成は失敗。仮CGを表示");}
+  }
+ }catch(e){
+  const msg=String(e.message||e);
+  const bs=[];
+  if(G.undo.length>undoLen)bs.push({label:"↩ 戻る",gold:true,fn:undo});
+  bs.push({label:"コピペに切替",gold:true,fn:()=>{setMode("bridge");openBridge(action);}});
+  bs.push({label:"再試行",primary:true,fn:()=>runVenice(action,isStart)});
+  if(msg==="AUTH")dialog("キーが無効です","設定画面でVenice APIキーを入れて保存してください。残高不足の可能性もあります。",bs);
+  else if(msg==="MODEL")dialog("モデル未選択","設定画面で「モデル一覧を取得」して、★無料のモデルを選んで保存してください。",bs);
+  else dialog("生成に失敗しました",msg.slice(0,140),bs);
+ }finally{$("load").classList.add("hide");lock(false);}
+}
+function undo(){
+ if(G.busy||!G.undo.length)return;
+ const p=G.undo.pop();
+ G.turn=p.turn;G.loc=p.loc;G.cat=p.cat;G.att=p.att;G.label=p.label;G.narr=p.narr;
+ G.choices=p.choices;G.archive=p.archive;G.history=p.history||[];
+ renderScene({location:p.loc,attentionLevel:p.att,statusLabel:p.label,narration:p.narr,choices:p.choices},p.turn,p.action,p.img);
+ $("free").value=p.submitted||"";if(p.submitted)$("free").focus();
+ lock(false);save();
+}
+
+function buildPacket(){
+ const hist=G.archive.slice(-3).map(a=>`- ${a.action?("行動: "+a.action):"開始"} → ${(a.narration||"").slice(0,60)}`).join("\n");
+ return `=== REAL JAPAN TURN PACKET ===
+GM指示: 現代日本サンドボックスのAIゲームマスターとして1ターン進めよ。破天荒な行動には現実の人々/警察/SNSが騒然と反応する。結果指定は100%受け入れる。narrationは日本語110〜175字。JSONのみ出力: {"location","attentionLevel","statusLabel","narration","choices":[{"label","type"}],"imagePrompt"}
+CURRENT LOCATION: ${G.loc}
+ATTENTION: ${G.att}% (${G.label})
+TURN: ${G.turn}
+RECENT:
+${hist||"(なし)"}
+LAST: ${(G.narr||"").slice(0,140)}
+ACTION: ${G.pending||"(開始)"}
+=== END ===`;
+}
+function openBridge(action){
+ G.pending=action||G.pending;
+ $("pk").textContent=buildPacket();
+ $("imp").value="";
+ $("bridge").classList.remove("hide");
+ copyText($("pk").textContent);
+}
+async function copyText(t){
+ try{await navigator.clipboard.writeText(t);toast("パケットをコピーしました");}
+ catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");toast("コピーしました");}catch(e2){toast("長押しでコピーしてください");}ta.remove();}
+}
+function applyImport(){
+ const o=parseJSON($("imp").value);
+ if(!o||!o.narration){toast("JSONが見つかりません");return;}
+ G.undo.push(snap(G.pending||""));
+ apply(o,G.pending||"");
+ toast("反映しました");
+}
+
+function openHist(){
+ const list=$("hist");list.innerHTML="";
+ if(!G.archive.length)list.innerHTML='<p style="font-size:12px;font-weight:800;color:#64748b;text-align:center;padding:30px 0">まだ履歴がありません。</p>';
+ G.archive.slice().reverse().forEach(it=>{
+  const d=document.createElement("div");d.className="hitem";
+  d.innerHTML=`${it.img?`<img src="${it.img}">`:""}<div class="b"><div class="m"><span class="tt">TURN ${String(it.turn).padStart(2,"0")}</span><span class="ll">${esc(it.location)}</span></div>${it.action?`<p class="a">▶ ${esc(it.action)}</p>`:""}<p class="n">${esc(it.narration)}</p></div>`;
+  list.appendChild(d);
+ });
+ $("histm").classList.remove("hide");
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(G));}catch(e){}}
+function load(){
+ try{const r=localStorage.getItem(KEY);if(!r)return false;const o=JSON.parse(r);
+  if(!o.turn)return false;Object.assign(G,o);G.busy=false;
+  $("start").classList.add("hide");$("game").classList.remove("hide");setMode(G.mode||"venice");
+  const last=G.archive[G.archive.length-1];
+  renderScene({location:G.loc,attentionLevel:G.att,statusLabel:G.label,narration:G.narr,choices:G.choices},G.turn,last?last.action:null,last?last.img:null);
+  lock(false);return true;}catch(e){return false;}
+}
+
+document.querySelectorAll(".pcard").forEach(b=>b.onclick=()=>start(b.dataset.scene));
+function start(scene){
+ G.turn=0;G.archive=[];G.undo=[];G.att=0;G.narr="";G.choices=[];G.loc="";G.history=[];
+ $("start").classList.add("hide");$("game").classList.remove("hide");
+ $("narr").textContent="最初のシーンを生成中...";$("choices").innerHTML="";
+ submit(scene);
+}
+$("go-custom").onclick=()=>{const t=$("custom-in").value.trim();
+ if(!t){dialog("入力チェック","場所や状況を入力するか、上から選んでください。",[{label:"OK",primary:true}]);return;}
+ start(t);};
+$("frm").onsubmit=e=>{e.preventDefault();if(G.busy)return;
+ const v=$("free").value.trim();if(!v)return;
+ if(G.turn!==0)$("free").value="";
+ submit(v);};
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{$("free").value=($("free").value?$("free").value+" ":"")+c.dataset.t;$("free").focus();});
+$("undo").onclick=undo;
+$("hist-btn").onclick=openHist;
+$("hist-x").onclick=()=>$("histm").classList.add("hide");
+$("br-x").onclick=()=>$("bridge").classList.add("hide");
+$("br-copy").onclick=()=>copyText($("pk").textContent);
+$("br-apply").onclick=applyImport;
+$("mode-btn").onclick=()=>setMode(G.mode==="venice"?"bridge":G.mode==="bridge"?"solo":"venice");
+$("drop").onclick=()=>{if(G.busy)return;const u=drawPOV();$("pov").src=u;$("pov").classList.add("on");$("drop").classList.add("hide");};
+$("redraw").onclick=()=>redraw();
+async function redraw(){
+ if(G.busy||!G.imgPrompt)return;
+ if(!SET.key){const u=drawPOV();$("pov").src=u;$("pov").classList.add("on");toast("キー未設定：仮CGを表示");return;}
+ dialog("CGを生成","1枚生成します。クレジットを消費します。",[
+  {label:"やめる"},{label:"生成する",primary:true,fn:doRedraw}]);
+}
+async function doRedraw(){
+ lock(true);$("loadt").textContent="RENDERING CG...";$("load").classList.remove("hide");
+ try{const u=await veniceImage(G.imgPrompt);$("pov").src=u;$("pov").classList.add("on");
+  if(G.archive.length){G.archive[G.archive.length-1].img=u;save();}}
+ catch(e){toast("CG生成に失敗しました");}
+ finally{$("load").classList.add("hide");lock(false);}
+}
+$("home").onclick=()=>{if(G.busy)return;
+ dialog("タイトルへ戻る","今のプレイを終了しますか？（進行は保存されています）",[
+  {label:"キャンセル"},{label:"戻る",primary:true,fn:()=>{$("game").classList.add("hide");$("start").classList.remove("hide");$("pov").classList.remove("on");}}]);};
+
+$("open-set").onclick=()=>{
+ $("keyin").value=SET.key;
+ document.querySelectorAll("#imseg button").forEach(b=>b.classList.toggle("on",b.dataset.v===SET.img));
+ $("setm").classList.remove("hide");
+};
+$("set-x").onclick=()=>$("setm").classList.add("hide");
+document.querySelectorAll("#imseg button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("#imseg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");});
+function priceOf(m){
+ const p=m.model_spec&&m.model_spec.pricing;
+ if(!p)return null;
+ const i=p.input&&Number(p.input.usd),o=p.output&&Number(p.output.usd);
+ if(i===null||o===null)return null;
+ return Math.max(i||0,o||0);
+}
+$("fetch-models").onclick=async()=>{
+ const k=$("keyin").value.trim();if(!k){toast("先にキーを入力");return;}
+ try{
+  const r=await fetch(API+"/models",{headers:{Authorization:"Bearer "+k}});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const j=await r.json();
+  const list=(j.data||[]).filter(m=>m.id);
+  const texts=list.filter(m=>m.type==="text"),imgs=list.filter(m=>m.type==="image");
+  const free=texts.filter(m=>priceOf(m)===0),paid=texts.filter(m=>priceOf(m)!==0);
+  const opt=m=>`<option value="${esc(m.id)}">${priceOf(m)===0?"★無料 ":""}${esc(m.id)}</option>`;
+  if(texts.length)$("tmodel").innerHTML=free.map(opt).join("")+paid.map(opt).join("");
+  if(imgs.length)$("imodel").innerHTML=imgs.map(m=>`<option value="${esc(m.id)}">${esc(m.id)}</option>`).join("");
+  if(free.length){$("tmodel").value=free[0].id;toast("無料モデル"+free.length+"件を先頭に表示");}
+  else toast("無料モデルなし。テキスト"+texts.length+" / 画像"+imgs.length);
+ }catch(e){toast("取得失敗："+e.message);}
+};
+$("set-save").onclick=async()=>{
+ SET.key=$("keyin").value.trim();
+ if(!$("tmodel").value){toast("モデル一覧を取得して選んでください");return;}
+ SET.tmodel=$("tmodel").value;SET.imodel=$("imodel").value;
+ const on=document.querySelector("#imseg button.on");if(on)SET.img=on.dataset.v;
+ saveSet();
+ if(!SET.key){toast("キー未入力");return;}
+ toast("接続テスト中...");
+ try{
+  const r=await fetch(API+"/models",{headers:{Authorization:"Bearer "+SET.key}});
+  if(r.ok){toast("接続OK");$("setm").classList.add("hide");}
+  else toast("接続NG："+r.status);
+ }catch(e){toast("接続NG："+e.message);}
+};
+$("set-clear").onclick=()=>{SET.key="";$("keyin").value="";saveSet();toast("キーを削除");};
+
+note();setMode(G.mode);
+load();
+})();
+</script>
+</body>
+</html>
